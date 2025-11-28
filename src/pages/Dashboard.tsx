@@ -23,7 +23,7 @@ const Dashboard: React.FC = () => {
   });
 
   const [fares, setFares] = useState<FareRecord[]>(dummyFares);
-  const [filteredFares, setFilteredFares] = useState<FareRecord[]>(dummyFares);
+  const [filteredFares, setFilteredFares] = useState<FareRecord[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
