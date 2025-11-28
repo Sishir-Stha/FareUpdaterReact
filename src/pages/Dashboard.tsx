@@ -37,6 +37,16 @@ const Dashboard: React.FC = () => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleClearFilters = () => {
+    setFilters({
+      sector: '',
+      bookingClass: '',
+      fareCode: '',
+      flightDate: '',
+      currency: 'ALL',
+    });
+  };
+
   const handleSearch = () => {
     let results = [...fares];
 
@@ -161,52 +171,40 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 md:pb-6">
       {/* Header */}
       <header className="bg-card border-b border-border shadow-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center shadow-glow">
-                <Plane className="w-6 h-6 text-primary-foreground" />
+        <div className="container mx-auto px-4 py-3 md:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full gradient-primary flex items-center justify-center shadow-glow shrink-0">
+                <Plane className="w-5 h-5 md:w-6 md:h-6 text-primary-foreground" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">FARE Update System</h1>
-                <p className="text-sm text-muted-foreground">
+              <div className="min-w-0">
+                <h1 className="text-base md:text-xl font-bold text-foreground truncate">FARE Update System</h1>
+                <p className="text-xs md:text-sm text-muted-foreground truncate">
                   Welcome, <span className="font-medium text-primary">{user?.username}</span>
                 </p>
               </div>
             </div>
 
-            <Button variant="outline" onClick={handleLogout} className="gap-2">
+            <Button variant="outline" onClick={handleLogout} size="sm" className="gap-1.5 shrink-0">
               <LogOut className="h-4 w-4" />
-              Logout
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="container mx-auto px-4 py-4 md:py-6 space-y-4 md:space-y-6">
         {/* Filter Bar */}
         <FilterBar
           filters={filters}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}
+          onClear={handleClearFilters}
         />
-
-        {/* Actions Bar */}
-        {selectedIds.size > 0 && (
-          <div className="flex items-center justify-between bg-primary/10 rounded-lg px-4 py-3 animate-fade-in">
-            <span className="text-sm font-medium text-primary">
-              {selectedIds.size} row(s) selected
-            </span>
-            <Button onClick={() => setIsEditModalOpen(true)} className="gap-2">
-              <Edit className="h-4 w-4" />
-              Edit Selected
-            </Button>
-          </div>
-        )}
 
         {/* Data Table */}
         <FareTable
@@ -216,6 +214,21 @@ const Dashboard: React.FC = () => {
           onSelectRow={handleSelectRow}
         />
       </main>
+
+      {/* Fixed Bottom Action Bar for Mobile */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 md:relative md:container md:mx-auto md:border md:rounded-lg md:mt-4 animate-slide-up z-20">
+          <div className="flex items-center justify-between gap-4 max-w-screen-xl mx-auto">
+            <span className="text-sm font-medium text-primary">
+              {selectedIds.size} row(s) selected
+            </span>
+            <Button onClick={() => setIsEditModalOpen(true)} className="gap-2">
+              <Edit className="h-4 w-4" />
+              Edit Selected
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       <EditModal
