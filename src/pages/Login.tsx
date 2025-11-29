@@ -10,9 +10,15 @@ const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth(); // Get isAuthenticated from useAuth
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard'); // Redirect to dashboard if already authenticated
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,9 +57,9 @@ const Login: React.FC = () => {
           <div className="bg-card rounded-2xl shadow-soft p-8 md:p-10">
             {/* Logo */}
             <div className="flex flex-col items-center mb-8">
-              <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center shadow-glow mb-4">
-                <Plane className="w-10 h-10 text-primary-foreground" />
-              </div>
+              
+               <img src="/logo.png" alt="Logo" className="w-[190px] h-[110px] mb-[-15px] mt-[-28px]" />
+            
               <h1 className="text-2xl font-bold text-foreground">FARE Update System</h1>
               <p className="text-muted-foreground mt-1">Sign in to your account</p>
             </div>
@@ -103,12 +109,6 @@ const Login: React.FC = () => {
               </Button>
             </form>
 
-            {/* Demo credentials */}
-            <div className="mt-6 p-3 rounded-lg bg-secondary/50 border border-border">
-              <p className="text-xs text-muted-foreground text-center">
-                Demo: <span className="font-medium">admin</span> / <span className="font-medium">admin123</span>
-              </p>
-            </div>
           </div>
         </div>
       </div>

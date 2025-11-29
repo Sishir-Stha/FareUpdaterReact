@@ -2,6 +2,15 @@ import React from 'react';
 import { FareRecord } from '@/data/dummyFares';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import {
   Table,
   TableBody,
@@ -10,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FareTableProps {
   fares: FareRecord[];
@@ -23,43 +33,74 @@ const FareCard: React.FC<{
   fare: FareRecord;
   isSelected: boolean;
   onSelect: () => void;
-}> = ({ fare, isSelected, onSelect }) => (
-  <Card
-    className={`p-4 transition-all ${
-      isSelected ? 'ring-2 ring-primary bg-primary/5' : ''
-    }`}
-  >
-    <div className="flex items-start gap-3">
-      <Checkbox
-        checked={isSelected}
-        onCheckedChange={onSelect}
-        className="mt-1"
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-2">
-          <span className="font-semibold text-foreground">{fare.sector}</span>
-          <span className="font-semibold text-primary">
-            {fare.currency === 'NPR' ? 'रू' : '$'} {fare.fareAmount.toLocaleString()}
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div>
-            <span className="text-muted-foreground">CC: </span>
-            <span className="text-foreground">{fare.cc}</span>
+}> = ({ fare, isSelected, onSelect }) => {
+  const isMobile = useIsMobile();
+
+  return (
+    <Card
+      className={`p-4 transition-all ${
+        isSelected ? 'ring-2 ring-primary bg-primary/5' : ''
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={onSelect}
+          className="mt-1"
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-semibold text-foreground">{fare.sector}</span>
+            <span className="font-semibold text-primary">
+              {fare.currency === 'NPR' ? 'रू' : '$'} {fare.fareAmount.toLocaleString()}
+            </span>
           </div>
-          <div>
-            <span className="text-muted-foreground">Flight: </span>
-            <span className="text-foreground">{fare.validatedFlight}</span>
-          </div>
-          <div className="col-span-2">
-            <span className="text-muted-foreground">Date: </span>
-            <span className="text-foreground">{fare.fltDateFrom} → {fare.fltDateTo}</span>
+          <div className="flex flex-col gap-2 text-sm"> {/* Changed to flex-col */}
+            <div className="flex items-center justify-between"> {/* Flex container for CC and Button/Flight */}
+              <div>
+                <span className="text-muted-foreground">CC: </span>
+                <span className="text-foreground">{fare.cc}</span>
+              </div>
+              {isMobile && (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="default" size="xs"> {/* Removed ml-100 */}
+                      View Flights
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+                    <SheetHeader>
+                      <SheetTitle>Flight Details for {fare.sector}</SheetTitle>
+                      <SheetDescription>
+                        Detailed flight information for this fare record.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="py-4 text-sm text-foreground space-y-2">
+                      <p><span className="font-medium text-muted-foreground">Validated Flights:</span> {fare.validatedFlight}</p>
+                      <p><span className="font-medium text-muted-foreground">Fare Code:</span> {fare.fareCode}</p>
+                      <p><span className="font-medium text-muted-foreground">Booking Class:</span> {fare.bookingClass}</p>
+                      <p><span className="font-medium text-muted-foreground">Flight Dates:</span> {fare.fltDateFrom} to {fare.fltDateTo}</p>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
+              {!isMobile && (
+                <div>
+                  <span className="text-muted-foreground">Flight: </span>
+                  <span className="text-foreground">{fare.validatedFlight}</span>
+                </div>
+              )}
+            </div>
+            <div> {/* This div is for Date, moved out of col-span-2 */}
+              <span className="text-muted-foreground">Date: </span>
+              <span className="text-foreground">{fare.fltDateFrom} → {fare.fltDateTo}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </Card>
-);
+    </Card>
+  );
+};
 
 const FareTable: React.FC<FareTableProps> = ({
   fares,

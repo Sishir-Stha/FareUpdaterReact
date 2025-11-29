@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface User {
   username: string;
   token: string;
+  userCode: string;
 }
 
 interface AuthContextType {
@@ -25,17 +26,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // Simulate API call - in production, this would be a real API
-    if (username === 'admin' && password === 'admin123') {
-      const userData: User = {
-        username,
-        token: 'mock-jwt-token-' + Date.now(),
-      };
-      localStorage.setItem('fareUser', JSON.stringify(userData));
-      setUser(userData);
-      return true;
+    try {
+      const response = await fetch('http://localhost:8443/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 200 && data.token) {
+        const userData: User = {
+          username: data.username,
+          token: data.token,
+          userCode: data.userCode,
+        };
+        localStorage.setItem('fareUser', JSON.stringify(userData));
+        setUser(userData);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {

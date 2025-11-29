@@ -39,7 +39,7 @@ const FilterFields: React.FC<{
     <div className="space-y-1.5">
       <label className="text-sm font-medium text-muted-foreground">Sector</label>
       <Input
-        placeholder="e.g. KTM-DEL"
+        placeholder="e.g. KTM-PKR or KTMPKR"
         value={filters.sector}
         onChange={(e) => onFilterChange('sector', e.target.value)}
         className="bg-background"
