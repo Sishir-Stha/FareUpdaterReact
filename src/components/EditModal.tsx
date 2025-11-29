@@ -47,7 +47,7 @@ const EditForm: React.FC<{
   isLoading: boolean;
   selectedCount: number;
 }> = ({ formData, onChange, onSubmit, onClose, isLoading, selectedCount }) => (
-  <form onSubmit={onSubmit} className="space-y-4">
+  <form onSubmit={onSubmit} className="space-y-6"> {/* Reduced gap */}
     <p className="text-sm text-muted-foreground">
       Editing {selectedCount} fare record(s)
     </p>
@@ -176,7 +176,7 @@ const EditModal: React.FC<EditModalProps> = ({
     return (
       <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl">
-          <SheetHeader className="pb-4">
+          <SheetHeader className="pb-2"> {/* Reduced padding-bottom */}
             <SheetTitle className="text-xl font-semibold text-primary">
               Edit Selected Fares
             </SheetTitle>

@@ -111,6 +111,7 @@ const Dashboard: React.FC = () => {
     toast({
       title: 'Logged Out',
       description: 'You have been successfully logged out',
+      duration: 2000, // Set duration to 2 seconds (2000ms)
     });
     navigate('/');
   };
@@ -177,9 +178,7 @@ const Dashboard: React.FC = () => {
         <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 md:gap-3 min-w-0">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full gradient-primary flex items-center justify-center shadow-glow shrink-0">
-                <Plane className="w-5 h-5 md:w-6 md:h-6 text-primary-foreground" />
-              </div>
+            <img src="/dashboardLogo.png" alt="Logo" className="w-[50px] h-[50px] " />
               <div className="min-w-0">
                 <h1 className="text-base md:text-xl font-bold text-foreground truncate">FARE Update System</h1>
                 <p className="text-xs md:text-sm text-muted-foreground truncate">
