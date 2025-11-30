@@ -8,4 +8,4 @@ export interface FareRecord {
   ValidOnFlight: string | null; // Renamed from validatedFlight
 }
 
-export const dummyFares: FareRecord[] = []; // Removed dummy data
+export const FareListData: FareRecord[] = []; // Renamed dummyData to FareListData

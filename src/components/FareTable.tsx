@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plane } from 'lucide-react'; // Import Plane icon
-import { FareRecord } from '@/data/dummyFares';
+import { FareRecord, FareListData } from '@/data/FareDataList';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

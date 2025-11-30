@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import FilterBar from '@/components/FilterBar';
 import FareTable from '@/components/FareTable';
 import EditModal, { EditFormData } from '@/components/EditModal';
-import { FareRecord } from '@/data/dummyFares';
+import { FareRecord, FareListData } from '@/data/FareDataList';
 
 const Dashboard: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -134,85 +134,6 @@ const Dashboard: React.FC = () => {
     navigate('/');
   };
 
-  const handleEditSubmit = async (data: EditFormData) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Update fares - This section needs to be re-evaluated as API for updating is not provided.
-    // For now, it will only simulate local changes.
-    const updatedFares = fares.map((fare) => {
-      if (selectedIds.has(fare.fareId)) { // Use fareId now
-        return {
-          ...fare,
-          flightDateFrom: data.fltDateFrom || fare.flightDateFrom, // Renamed from fltDateFrom
-          flightDateTo: data.fltDateTo || fare.flightDateTo,       // Renamed from fltDateTo
-          fareAmount: data.fareAmount ? parseFloat(data.fareAmount).toFixed(2) : fare.fareAmount, // Ensure fareAmount is string with 2 decimal places
-          ValidOnFlight: data.validOnFlight || fare.ValidOnFlight, // Renamed from validatedFlight
-        };
-      }
-      return fare;
-    });
-
-    if (data.editType === 'Copy') {
-      // Create copies of selected fares
-      const copies = filteredFares
-        .filter((fare) => selectedIds.has(fare.fareId)) // Use fareId now
-        .map((fare) => ({
-          ...fare,
-          fareId: `${fare.fareId}-copy-${Date.now()}`, // Use fareId now
-          flightDateFrom: data.fltDateFrom || fare.flightDateFrom,
-          flightDateTo: data.fltDateTo || fare.flightDateTo,
-          fareAmount: data.fareAmount ? parseFloat(data.fareAmount).toFixed(2) : fare.fareAmount,
-          ValidOnFlight: data.validOnFlight || fare.ValidOnFlight,
-        }));
-      updatedFares.push(...copies);
-    }
-
-    setFares(updatedFares);
-    // After an edit, re-apply the current filters to the updated set of fares
-    // to ensure the table reflects the correct data.
-    let reFilteredFares = updatedFares;
-
-    if (filters.sector) {
-      reFilteredFares = reFilteredFares.filter((fare) =>
-        fare.sector.toLowerCase().includes(filters.sector.toLowerCase())
-      );
-    }
-    // Note: The bookingClass, fareCode, flightDate, and currency filtering logic here
-    // should ideally match the API's filtering logic to maintain consistency.
-    // For now, we'll keep it as a simple client-side re-filter.
-    if (filters.bookingClass) {
-      reFilteredFares = reFilteredFares.filter((fare) =>
-        fare.bookRcd.toLowerCase().includes(filters.bookingClass.toLowerCase())
-      );
-    }
-    if (filters.fareCode) {
-      reFilteredFares = reFilteredFares.filter((fare) =>
-        fare.bookRcd.toLowerCase().includes(filters.fareCode.toLowerCase())
-      );
-    }
-    if (filters.flightDate) {
-      reFilteredFares = reFilteredFares.filter(
-        (fare) =>
-          fare.flightDateFrom <= filters.flightDate && fare.flightDateTo >= filters.flightDate
-      );
-    }
-    if (filters.currency !== 'ALL') {
-      reFilteredFares = reFilteredFares.filter((fare) =>
-        fare.bookRcd.toLowerCase().includes(filters.currency.toLowerCase()) // Assuming currency is part of bookRcd for filtering
-      );
-    }
-    setFilteredFares(reFilteredFares);
-    setCurrentPage(1); // Reset to first page after edit
-
-    setIsEditModalOpen(false);
-    setSelectedIds(new Set());
-
-    toast({
-      title: 'Success',
-      description: `${selectedIds.size} fare(s) ${data.editType === 'Copy' ? 'copied' : 'updated'} successfully`,
-    });
-  };
 
   const totalPages = Math.ceil(filteredFares.length / itemsPerPage);
   const currentFares = filteredFares.slice(
@@ -330,7 +251,6 @@ const Dashboard: React.FC = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         selectedFares={selectedFares}
-        onSubmit={handleEditSubmit}
       />
     </div>
   );
