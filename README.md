@@ -41,3 +41,8 @@ This is the frontend for the Fare Update Project. It's a React application built
 - make some changes in the search form and tables and edit button of browser
 - added pagination in table data
 - added the fare Update endpoint currently working perfectly but need to see the 2030 error
+
+### 11/30/2025
+
+- All the project has been done and closed
+- Given for QA
