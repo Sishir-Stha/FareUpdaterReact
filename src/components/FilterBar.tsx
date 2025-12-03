@@ -81,12 +81,12 @@ const FilterFields: React.FC<{
       <Select
         value={filters.currency}
         onValueChange={(value) => onFilterChange('currency', value)}
+        defaultValue="NPR" // Set default value to NPR
       >
         <SelectTrigger className="bg-background">
           <SelectValue placeholder="Select currency" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="ALL">All</SelectItem>
           <SelectItem value="NPR">NPR</SelectItem>
           <SelectItem value="USD">USD</SelectItem>
         </SelectContent>
@@ -103,7 +103,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, onSearch
     setIsOpen(false);
   };
 
-  const hasFilters = filters.sector || filters.bookingClass || filters.fareCode || filters.flightDate || filters.currency !== 'ALL';
+  const hasFilters = filters.sector || filters.bookingClass || filters.fareCode || filters.flightDate || filters.currency;
 
   return (
     <>

@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import FilterBar from '@/components/FilterBar';
 import FareTable from '@/components/FareTable';
 import EditModal, { EditFormData } from '@/components/EditModal';
-import { dummyFares, FareRecord } from '@/data/dummyFares';
+import { FareRecord, FareListData } from '@/data/FareDataList';
 
 const Dashboard: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -19,13 +19,17 @@ const Dashboard: React.FC = () => {
     bookingClass: '',
     fareCode: '',
     flightDate: '',
-    currency: 'ALL',
+    currency: 'NPR', // Default currency set to NPR
   });
 
-  const [fares, setFares] = useState<FareRecord[]>(dummyFares);
+  const [fares, setFares] = useState<FareRecord[]>([]);
   const [filteredFares, setFilteredFares] = useState<FareRecord[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -43,65 +47,79 @@ const Dashboard: React.FC = () => {
       bookingClass: '',
       fareCode: '',
       flightDate: '',
-      currency: 'ALL',
+      currency: 'NPR', // Default currency set to NPR
     });
   };
 
-  const handleSearch = () => {
-    let results = [...fares];
-
-    if (filters.sector) {
-      results = results.filter((fare) =>
-        fare.sector.toLowerCase().includes(filters.sector.toLowerCase())
-      );
-    }
-
-    if (filters.bookingClass) {
-      results = results.filter((fare) =>
-        fare.bookingClass.toLowerCase().includes(filters.bookingClass.toLowerCase())
-      );
-    }
-
-    if (filters.fareCode) {
-      results = results.filter((fare) =>
-        fare.fareCode.toLowerCase().includes(filters.fareCode.toLowerCase())
-      );
-    }
-
-    if (filters.flightDate) {
-      results = results.filter(
-        (fare) =>
-          fare.fltDateFrom <= filters.flightDate && fare.fltDateTo >= filters.flightDate
-      );
-    }
-
-    if (filters.currency !== 'ALL') {
-      results = results.filter((fare) => fare.currency === filters.currency);
-    }
-
-    setFilteredFares(results);
+  const handleSearch = async () => {
+    setError(null);
+    setIsLoading(true);
+    setFares([]);
+    setFilteredFares([]);
     setSelectedIds(new Set());
 
+    const requestBody = {
+      sector: filters.sector.replace('-', '').toUpperCase(), // Normalize sector
+      bookingClassRcd: filters.bookingClass,
+      fareCode: filters.fareCode,
+      flightDate: filters.flightDate,
+      currency: filters.currency === 'ALL' ? 'npr' : filters.currency.toLowerCase(), // Default to NPR if ALL is selected
+    };
+
+    try {
+      const response = await fetch('http://localhost:8443/api/v1/updater/getFareData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data: FareRecord[] = await response.json();
+
+      if (data.length === 0) {
+        setError('The fare doesn\'t exist i.e is null');
+      }
+
+    setFares(data);
+    setFilteredFares(data); // Initially, filtered fares are all fetched fares
+    setCurrentPage(1); // Reset to first page on new search
     toast({
       title: 'Search Complete',
-      description: `Found ${results.length} fare record(s)`,
+      description: `Found ${data.length} fare record(s)`,
     });
+    } catch (err) {
+      console.error('Error fetching fare data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch fare data.');
+      toast({
+        title: 'Search Failed',
+        description: err instanceof Error ? err.message : 'An unknown error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSelectAll = () => {
     if (selectedIds.size === filteredFares.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredFares.map((fare) => fare.id)));
+      setSelectedIds(new Set(filteredFares.map((fare) => fare.fareId)));
     }
   };
 
-  const handleSelectRow = (id: string) => {
+  const handleSelectRow = (fareId: string) => {
     const newSelected = new Set(selectedIds);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
+    if (newSelected.has(fareId)) {
+      newSelected.delete(fareId);
     } else {
-      newSelected.add(id);
+      newSelected.add(fareId);
     }
     setSelectedIds(newSelected);
   };
@@ -116,56 +134,18 @@ const Dashboard: React.FC = () => {
     navigate('/');
   };
 
-  const handleEditSubmit = async (data: EditFormData) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // Update fares
-    const updatedFares = fares.map((fare) => {
-      if (selectedIds.has(fare.id)) {
-        return {
-          ...fare,
-          fltDateFrom: data.fltDateFrom || fare.fltDateFrom,
-          fltDateTo: data.fltDateTo || fare.fltDateTo,
-          fareAmount: data.fareAmount ? parseFloat(data.fareAmount) : fare.fareAmount,
-          validatedFlight: data.validOnFlight || fare.validatedFlight,
-        };
-      }
-      return fare;
-    });
+  const totalPages = Math.ceil(filteredFares.length / itemsPerPage);
+  const currentFares = filteredFares.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-    if (data.editType === 'Copy') {
-      // Create copies of selected fares
-      const copies = filteredFares
-        .filter((fare) => selectedIds.has(fare.id))
-        .map((fare) => ({
-          ...fare,
-          id: `${fare.id}-copy-${Date.now()}`,
-          fltDateFrom: data.fltDateFrom || fare.fltDateFrom,
-          fltDateTo: data.fltDateTo || fare.fltDateTo,
-          fareAmount: data.fareAmount ? parseFloat(data.fareAmount) : fare.fareAmount,
-          validatedFlight: data.validOnFlight || fare.validatedFlight,
-        }));
-      updatedFares.push(...copies);
-    }
-
-    setFares(updatedFares);
-    setFilteredFares(
-      updatedFares.filter((fare) =>
-        filteredFares.some((f) => f.id === fare.id) || data.editType === 'Copy'
-      )
-    );
-
-    setIsEditModalOpen(false);
-    setSelectedIds(new Set());
-
-    toast({
-      title: 'Success',
-      description: `${selectedIds.size} fare(s) ${data.editType === 'Copy' ? 'copied' : 'updated'} successfully`,
-    });
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
-  const selectedFares = filteredFares.filter((fare) => selectedIds.has(fare.id));
+  const selectedFares = filteredFares.filter((fare) => selectedIds.has(fare.fareId)); // Use fareId now
 
   if (!isAuthenticated) {
     return null;
@@ -205,18 +185,55 @@ const Dashboard: React.FC = () => {
           onClear={handleClearFilters}
         />
 
+        {/* Action Bar (desktop) - above table */}
+        {selectedIds.size > 0 && (
+          <div className="hidden md:flex items-center justify-between mb-4">
+            <span className="text-sm font-medium text-primary">
+              {selectedIds.size} row(s) selected
+            </span>
+            <Button onClick={() => setIsEditModalOpen(true)} className="gap-2">
+              <Edit className="h-4 w-4" />
+              Edit Selected
+            </Button>
+          </div>
+        )}
+
         {/* Data Table */}
         <FareTable
-          fares={filteredFares}
+          fares={currentFares} // Pass paginated fares
           selectedIds={selectedIds}
           onSelectAll={handleSelectAll}
           onSelectRow={handleSelectRow}
+          isLoading={isLoading}
+          error={error}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       </main>
 
+      {/* Loading and Error Indicators */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
+          <div className="flex flex-col items-center gap-4 p-6 bg-card rounded-lg shadow-soft">
+            <Plane className="h-12 w-12 text-primary animate-bounce" />
+            <p className="text-lg font-medium text-foreground">Fetching fare data...</p>
+          </div>
+        </div>
+      )}
+
+      {error && !isLoading && (
+        <div className="container mx-auto px-4 py-2">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Error:</strong>
+            <span className="block sm:inline"> {error}</span>
+          </div>
+        </div>
+      )}
+
       {/* Fixed Bottom Action Bar for Mobile */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 md:relative md:container md:mx-auto md:border md:rounded-lg md:mt-4 animate-slide-up z-20">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 md:hidden animate-slide-up z-20">
           <div className="flex items-center justify-between gap-4 max-w-screen-xl mx-auto">
             <span className="text-sm font-medium text-primary">
               {selectedIds.size} row(s) selected
@@ -234,7 +251,6 @@ const Dashboard: React.FC = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         selectedFares={selectedFares}
-        onSubmit={handleEditSubmit}
       />
     </div>
   );

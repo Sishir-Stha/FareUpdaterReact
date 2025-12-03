@@ -1,5 +1,6 @@
 import React from 'react';
-import { FareRecord } from '@/data/dummyFares';
+import { Plane } from 'lucide-react'; // Import Plane icon
+import { FareRecord, FareListData } from '@/data/FareDataList';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,13 +20,26 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationLink,
+  PaginationNext,
+} from '@/components/ui/pagination'; // Import pagination components
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FareTableProps {
   fares: FareRecord[];
   selectedIds: Set<string>;
   onSelectAll: () => void;
-  onSelectRow: (id: string) => void;
+  onSelectRow: (fareId: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 // Mobile Card View
@@ -35,6 +49,12 @@ const FareCard: React.FC<{
   onSelect: () => void;
 }> = ({ fare, isSelected, onSelect }) => {
   const isMobile = useIsMobile();
+
+  // Extract booking class and fare code from bookRcd
+  const bookRcdParts = fare.bookRcd.split(' / ');
+  const bookingClass = bookRcdParts[0] || '';
+  const fareCode = bookRcdParts[1] || '';
+
 
   return (
     <Card
@@ -52,19 +72,19 @@ const FareCard: React.FC<{
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-foreground">{fare.sector}</span>
             <span className="font-semibold text-primary">
-              {fare.currency === 'NPR' ? 'रू' : '$'} {fare.fareAmount.toLocaleString()}
+              Rs {parseFloat(fare.fareAmount).toLocaleString()}
             </span>
           </div>
           <div className="flex flex-col gap-2 text-sm"> {/* Changed to flex-col */}
             <div className="flex items-center justify-between"> {/* Flex container for CC and Button/Flight */}
               <div>
-                <span className="text-muted-foreground">CC: </span>
-                <span className="text-foreground">{fare.cc}</span>
+                <span className="text-muted-foreground">Booking Class: </span>
+                <span className="text-foreground">{bookingClass}</span>
               </div>
               {isMobile && (
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="default" size="xs"> {/* Removed ml-100 */}
+                    <Button variant="default" size="xs">
                       View Flights
                     </Button>
                   </SheetTrigger>
@@ -76,10 +96,10 @@ const FareCard: React.FC<{
                       </SheetDescription>
                     </SheetHeader>
                     <div className="py-4 text-sm text-foreground space-y-2">
-                      <p><span className="font-medium text-muted-foreground">Validated Flights:</span> {fare.validatedFlight}</p>
-                      <p><span className="font-medium text-muted-foreground">Fare Code:</span> {fare.fareCode}</p>
-                      <p><span className="font-medium text-muted-foreground">Booking Class:</span> {fare.bookingClass}</p>
-                      <p><span className="font-medium text-muted-foreground">Flight Dates:</span> {fare.fltDateFrom} to {fare.fltDateTo}</p>
+                      <p><span className="font-medium text-muted-foreground">Validated Flights:</span> {fare.ValidOnFlight || 'N/A'}</p>
+                      <p><span className="font-medium text-muted-foreground">Fare Code:</span> {fareCode}</p>
+                      <p><span className="font-medium text-muted-foreground">Booking Class:</span> {bookingClass}</p>
+                      <p><span className="font-medium text-muted-foreground">Flight Dates:</span> {fare.flightDateFrom} to {fare.flightDateTo}</p>
                     </div>
                   </SheetContent>
                 </Sheet>
@@ -87,13 +107,13 @@ const FareCard: React.FC<{
               {!isMobile && (
                 <div>
                   <span className="text-muted-foreground">Flight: </span>
-                  <span className="text-foreground">{fare.validatedFlight}</span>
+                  <span className="text-foreground">{fare.ValidOnFlight || 'N/A'}</span>
                 </div>
               )}
             </div>
             <div> {/* This div is for Date, moved out of col-span-2 */}
               <span className="text-muted-foreground">Date: </span>
-              <span className="text-foreground">{fare.fltDateFrom} → {fare.fltDateTo}</span>
+              <span className="text-foreground">{fare.flightDateFrom} → {fare.flightDateTo}</span>
             </div>
           </div>
         </div>
@@ -107,9 +127,32 @@ const FareTable: React.FC<FareTableProps> = ({
   selectedIds,
   onSelectAll,
   onSelectRow,
+  isLoading,
+  error,
+  currentPage,
+  totalPages,
+  onPageChange,
 }) => {
   const allSelected = fares.length > 0 && selectedIds.size === fares.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < fares.length;
+
+  if (isLoading) {
+    return (
+      <div className="bg-card rounded-lg shadow-soft p-8 md:p-12 text-center animate-fade-in">
+        <Plane className="mx-auto h-12 w-12 text-primary animate-bounce" />
+        <p className="text-muted-foreground mt-4">Loading fare data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-center">
+        <strong className="font-bold">Error:</strong>
+        <span className="block sm:inline"> {error}</span>
+      </div>
+    );
+  }
 
   if (fares.length === 0) {
     return (
@@ -120,62 +163,99 @@ const FareTable: React.FC<FareTableProps> = ({
     );
   }
 
+  const renderPagination = () => (
+    <Pagination className="mt-4 px-4 py-2"> {/* Added px-4 py-2 for padding */}
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          />
+        </PaginationItem>
+        {Array.from({ length: totalPages }, (_, i) => (
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => onPageChange(i + 1)}
+              isActive={currentPage === i + 1}
+            >
+              {i + 1}
+            </PaginationLink>
+          </PaginationItem>
+        ))}
+        <PaginationItem>
+          <PaginationNext
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  );
+
   return (
     <>
       {/* Desktop Table View */}
-      <div className="hidden md:block bg-card rounded-lg shadow-soft overflow-hidden animate-slide-up">
+      <div className="hidden md:block bg-card rounded-lg shadow-soft animate-slide-up"> {/* Removed overflow-hidden */}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/10">
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={allSelected}
-                    ref={(el) => {
-                      if (el) {
-                        (el as HTMLButtonElement).dataset.state = someSelected ? 'indeterminate' : allSelected ? 'checked' : 'unchecked';
-                      }
-                    }}
-                    onCheckedChange={onSelectAll}
-                    aria-label="Select all"
-                  />
+                <TableHead className="w-40"> {/* Increased width to accommodate text */}
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={allSelected}
+                      ref={(el) => {
+                        if (el) {
+                          (el as HTMLButtonElement).dataset.state = someSelected ? 'indeterminate' : allSelected ? 'checked' : 'unchecked';
+                        }
+                      }}
+                      onCheckedChange={onSelectAll}
+                      aria-label="Select all"
+                    />
+                    {selectedIds.size > 0 && (
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {selectedIds.size} selected
+                      </span>
+                    )}
+                  </div>
                 </TableHead>
                 <TableHead className="font-semibold text-foreground">Sector</TableHead>
-                <TableHead className="font-semibold text-foreground">CC</TableHead>
-                <TableHead className="font-semibold text-foreground">Flt Date From</TableHead>
-                <TableHead className="font-semibold text-foreground">Flt Date To</TableHead>
+                <TableHead className="font-semibold text-foreground">Booking Class / Fare Code</TableHead>
+                <TableHead className="font-semibold text-foreground">Flight Date From</TableHead>
+                <TableHead className="font-semibold text-foreground">Flight Date To</TableHead>
                 <TableHead className="font-semibold text-foreground text-right">Fare Amount</TableHead>
-                <TableHead className="font-semibold text-foreground">Validated Flight</TableHead>
+                <TableHead className="font-semibold text-foreground">Valid On Flight</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {fares.map((fare) => (
                 <TableRow
-                  key={fare.id}
+                  key={fare.fareId}
                   className={`transition-colors ${
-                    selectedIds.has(fare.id) ? 'bg-primary/10' : ''
+                    selectedIds.has(fare.fareId) ? 'bg-primary/10' : ''
                   }`}
                 >
                   <TableCell>
                     <Checkbox
-                      checked={selectedIds.has(fare.id)}
-                      onCheckedChange={() => onSelectRow(fare.id)}
-                      aria-label={`Select row ${fare.id}`}
+                      checked={selectedIds.has(fare.fareId)}
+                      onCheckedChange={() => onSelectRow(fare.fareId)}
+                      aria-label={`Select row ${fare.fareId}`}
                     />
                   </TableCell>
                   <TableCell className="font-medium">{fare.sector}</TableCell>
-                  <TableCell>{fare.cc}</TableCell>
-                  <TableCell>{fare.fltDateFrom}</TableCell>
-                  <TableCell>{fare.fltDateTo}</TableCell>
+                  <TableCell>{fare.bookRcd}</TableCell>
+                  <TableCell>{fare.flightDateFrom.split(' ')[0]}</TableCell> {/* Only date part */}
+                  <TableCell>{fare.flightDateTo.split(' ')[0]}</TableCell>   {/* Only date part */}
                   <TableCell className="text-right font-medium">
-                    {fare.currency === 'NPR' ? 'रू' : '$'} {fare.fareAmount.toLocaleString()}
+                    Rs {parseFloat(fare.fareAmount).toLocaleString()}
                   </TableCell>
-                  <TableCell>{fare.validatedFlight}</TableCell>
+                  <TableCell>{fare.ValidOnFlight || 'N/A'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+        {totalPages > 1 && renderPagination()}
       </div>
 
       {/* Mobile Card View */}
@@ -188,26 +268,27 @@ const FareTable: React.FC<FareTableProps> = ({
               onCheckedChange={onSelectAll}
               aria-label="Select all"
             />
-            <span className="text-sm font-medium text-muted-foreground">
-              Select all ({fares.length})
-            </span>
+            {selectedIds.size > 0 && (
+              <span className="text-sm font-medium text-muted-foreground">
+                {selectedIds.size} selected
+              </span>
+            )}
           </div>
-          {selectedIds.size > 0 && (
-            <span className="text-sm font-medium text-primary">
-              {selectedIds.size} selected
-            </span>
-          )}
+          <span className="text-sm font-medium text-muted-foreground">
+            Total Fares: {fares.length}
+          </span>
         </div>
 
         {/* Fare Cards */}
         {fares.map((fare) => (
           <FareCard
-            key={fare.id}
+            key={fare.fareId}
             fare={fare}
-            isSelected={selectedIds.has(fare.id)}
-            onSelect={() => onSelectRow(fare.id)}
+            isSelected={selectedIds.has(fare.fareId)}
+            onSelect={() => onSelectRow(fare.fareId)}
           />
         ))}
+        {totalPages > 1 && renderPagination()}
       </div>
     </>
   );

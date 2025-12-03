@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FareRecord } from '@/data/dummyFares';
+import { FareRecord } from '@/data/FareDataList';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Dialog,
@@ -28,7 +30,6 @@ interface EditModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedFares: FareRecord[];
-  onSubmit: (data: EditFormData) => Promise<void>;
 }
 
 export interface EditFormData {
@@ -136,15 +137,15 @@ const EditModal: React.FC<EditModalProps> = ({
   isOpen,
   onClose,
   selectedFares,
-  onSubmit,
 }) => {
   const isMobile = useIsMobile();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<EditFormData>({
     fltDateFrom: '',
     fltDateTo: '',
     fareAmount: '',
     editType: 'Update',
-    validOnFlight: selectedFares.map((f) => f.validatedFlight).join(', '),
+    validOnFlight: selectedFares.map((f) => f.ValidOnFlight).join(', '),
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -152,7 +153,7 @@ const EditModal: React.FC<EditModalProps> = ({
     if (selectedFares.length > 0) {
       setFormData((prev) => ({
         ...prev,
-        validOnFlight: selectedFares.map((f) => f.validatedFlight).join(', '),
+        validOnFlight: selectedFares.map((f) => f.ValidOnFlight).join(', '),
       }));
     }
   }, [selectedFares]);
@@ -160,8 +161,43 @@ const EditModal: React.FC<EditModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    if (!user) {
+      toast.error('You must be logged in to perform this action.');
+      setIsLoading(false);
+      return;
+    }
+
+    const requestBody = {
+      fareid: selectedFares.map((fare) => fare.fareId),
+      flightdatefrom: formData.fltDateFrom,
+      flightdateto: formData.fltDateTo,
+      fareamount: formData.fareAmount,
+      validonflight: formData.validOnFlight,
+      actiontype: formData.editType.toUpperCase(),
+      userlogon: user.userId,
+    };
+
     try {
-      await onSubmit(formData);
+      const response = await fetch('https://fareupdate.yetiairlines.com:8443/api/v1/updater/updateFare', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (response.ok) {
+        const result = await response.text();
+        toast.success(`${result} fares updated successfully.`);
+        onClose();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || `Error: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
