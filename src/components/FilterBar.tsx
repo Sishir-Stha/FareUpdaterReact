@@ -19,9 +19,10 @@ import {
 
 interface FilterBarProps {
   filters: {
-    sector: string;
-    bookingClass: string;
+    origin: string;
+    destination: string;
     fareCode: string;
+    bookingClass: string;
     flightDate: string;
     currency: string;
   };
@@ -35,13 +36,53 @@ const FilterFields: React.FC<{
   onFilterChange: FilterBarProps['onFilterChange'];
   isMobile?: boolean;
 }> = ({ filters, onFilterChange, isMobile }) => (
-  <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-5'}`}>
+  <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-6'}`}>
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-muted-foreground">Sector</label>
+      <label className="text-sm font-medium text-muted-foreground">Origin</label>
+      <Select
+        value={filters.origin}
+        onValueChange={(value) => onFilterChange('origin', value)}
+      >
+        <SelectTrigger className="bg-background">
+          <SelectValue placeholder="Select origin" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="KTM">KTM</SelectItem>
+          <SelectItem value="PKR">PKR</SelectItem>
+          <SelectItem value="BIR">BIR</SelectItem>
+          <SelectItem value="BWA">BWA</SelectItem>
+          <SelectItem value="BDP">BDP</SelectItem>
+          <SelectItem value="KEP">KEP</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium text-muted-foreground">Destination</label>
+      <Select
+        value={filters.destination}
+        onValueChange={(value) => onFilterChange('destination', value)}
+      >
+        <SelectTrigger className="bg-background">
+          <SelectValue placeholder="Select destination" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="KTM">KTM</SelectItem>
+          <SelectItem value="PKR">PKR</SelectItem>
+          <SelectItem value="BIR">BIR</SelectItem>
+          <SelectItem value="BWA">BWA</SelectItem>
+          <SelectItem value="BDP">BDP</SelectItem>
+          <SelectItem value="KEP">KEP</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium text-muted-foreground">Fare Code</label>
       <Input
-        placeholder="e.g. KTM-PKR or KTMPKR"
-        value={filters.sector}
-        onChange={(e) => onFilterChange('sector', e.target.value)}
+        placeholder="e"
+        value={filters.fareCode}
+        onChange={(e) => onFilterChange('fareCode', e.target.value)}
         className="bg-background"
       />
     </div>
@@ -49,19 +90,9 @@ const FilterFields: React.FC<{
     <div className="space-y-1.5">
       <label className="text-sm font-medium text-muted-foreground">Booking Class</label>
       <Input
-        placeholder="e.g. Y, M, B"
+        placeholder="e1"
         value={filters.bookingClass}
         onChange={(e) => onFilterChange('bookingClass', e.target.value)}
-        className="bg-background"
-      />
-    </div>
-
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium text-muted-foreground">Fare Code</label>
-      <Input
-        placeholder="e.g. YOWRT"
-        value={filters.fareCode}
-        onChange={(e) => onFilterChange('fareCode', e.target.value)}
         className="bg-background"
       />
     </div>
@@ -103,7 +134,13 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, onSearch
     setIsOpen(false);
   };
 
-  const hasFilters = filters.sector || filters.bookingClass || filters.fareCode || filters.flightDate || filters.currency;
+  const hasFilters =
+    filters.origin ||
+    filters.destination ||
+    filters.bookingClass ||
+    filters.fareCode ||
+    filters.flightDate ||
+    filters.currency;
 
   return (
     <>

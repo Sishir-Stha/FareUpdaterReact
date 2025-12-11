@@ -25,6 +25,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+} from '@/components/ui/alert-dialog';
+import { Switch } from '@/components/ui/switch';
 
 interface EditModalProps {
   isOpen: boolean;
@@ -38,6 +49,7 @@ export interface EditFormData {
   fareAmount: string;
   editType: 'Update' | 'Copy';
   validOnFlight: string;
+  isActive: boolean;
 }
 
 const EditForm: React.FC<{
@@ -47,7 +59,26 @@ const EditForm: React.FC<{
   onClose: () => void;
   isLoading: boolean;
   selectedCount: number;
-}> = ({ formData, onChange, onSubmit, onClose, isLoading, selectedCount }) => (
+  sectorLabel: string;
+  amountError: string | null;
+  dateError: string | null;
+  onToggleActive: () => void;
+  showInactiveConfirm: boolean;
+  setShowInactiveConfirm: (value: boolean) => void;
+}> = ({
+  formData,
+  onChange,
+  onSubmit,
+  onClose,
+  isLoading,
+  selectedCount,
+  sectorLabel,
+  amountError,
+  dateError,
+  onToggleActive,
+  showInactiveConfirm,
+  setShowInactiveConfirm,
+}) => (
   <form onSubmit={onSubmit} className="space-y-6"> {/* Reduced gap */}
     <p className="text-sm text-muted-foreground">
       Editing {selectedCount} fare record(s)
@@ -74,10 +105,15 @@ const EditForm: React.FC<{
           type="date"
           value={formData.fltDateTo}
           onChange={(e) => onChange('fltDateTo', e.target.value)}
+          min={formData.fltDateFrom}
           required
         />
       </div>
     </div>
+
+    {dateError && (
+      <p className="text-sm text-red-500">{dateError}</p>
+    )}
 
     <div className="space-y-1.5">
       <label className="text-sm font-medium text-muted-foreground">
@@ -92,22 +128,76 @@ const EditForm: React.FC<{
       />
     </div>
 
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium text-muted-foreground">
-        Edit Type
-      </label>
-      <Select
-        value={formData.editType}
-        onValueChange={(value) => onChange('editType', value as 'Update' | 'Copy')}
-      >
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="Update">Update</SelectItem>
-          <SelectItem value="Copy">Copy</SelectItem>
-        </SelectContent>
-      </Select>
+    {amountError && (
+      <p className="text-sm text-red-500">{amountError}</p>
+    )}
+
+
+    <AlertDialog open={showInactiveConfirm} onOpenChange={setShowInactiveConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Make fare inactive?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to make this fare inactive?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel
+            onClick={() => {
+              setShowInactiveConfirm(false);
+            }}
+          >
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              onToggleActive();
+              setShowInactiveConfirm(false);
+            }}
+          >
+            Confirm
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-muted-foreground">
+          Edit Type
+        </label>
+        <Select
+          value={formData.editType}
+          onValueChange={(value) => onChange('editType', value as 'Update' | 'Copy')}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Update">Update</SelectItem>
+            <SelectItem value="Copy">Copy</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-muted-foreground">Status</label>
+        <div className="flex items-center gap-3">
+          <Switch
+            checked={formData.isActive}
+            onCheckedChange={(checked) => {
+              if (!checked) {
+                setShowInactiveConfirm(true);
+              } else {
+                onToggleActive();
+              }
+            }}
+          />
+          <span className="text-sm text-muted-foreground">
+            {formData.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+      </div>
     </div>
 
     <div className="space-y-1.5">
@@ -146,8 +236,29 @@ const EditModal: React.FC<EditModalProps> = ({
     fareAmount: '',
     editType: 'Update',
     validOnFlight: selectedFares.map((f) => f.ValidOnFlight).join(', '),
+    isActive: true,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [amountError, setAmountError] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [showInactiveConfirm, setShowInactiveConfirm] = useState(false);
+
+  const sectorCode = selectedFares[0]?.sector ?? '';
+  let origin = '';
+  let destination = '';
+
+  if (sectorCode.includes('-')) {
+    const parts = sectorCode.split('-');
+    origin = parts[0] || '';
+    destination = parts[1] || '';
+  } else if (sectorCode.length === 6) {
+    origin = sectorCode.slice(0, 3);
+    destination = sectorCode.slice(3);
+  }
+
+const sectorLabel =
+  origin && destination ? `${origin.toUpperCase()} → ${destination.toUpperCase()}` : '';
+
 
   React.useEffect(() => {
     if (selectedFares.length > 0) {
@@ -160,6 +271,25 @@ const EditModal: React.FC<EditModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setAmountError(null);
+    setDateError(null);
+
+    const amount = parseFloat(formData.fareAmount || '0');
+    if (isNaN(amount) || amount < 0) {
+      setAmountError('Amount must not be negative.');
+      return;
+    }
+
+    if (formData.fltDateFrom && formData.fltDateTo) {
+      const from = new Date(formData.fltDateFrom);
+      const to = new Date(formData.fltDateTo);
+      if (to < from) {
+        setDateError('Date To must be greater than or equal to Date From.');
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     if (!user) {
@@ -176,10 +306,11 @@ const EditModal: React.FC<EditModalProps> = ({
       validonflight: formData.validOnFlight,
       actiontype: formData.editType.toUpperCase(),
       userlogon: user.userId,
+      status: formData.isActive ? 'A' : 'I',
     };
 
     try {
-      const response = await fetch('https://fareupdate.yetiairlines.com:8443/api/v1/updater/updateFare', {
+      const response = await fetch('http://localhost:8443/api/v1/updater/updateFare', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -225,6 +356,14 @@ const EditModal: React.FC<EditModalProps> = ({
               onClose={onClose}
               isLoading={isLoading}
               selectedCount={selectedFares.length}
+              sectorLabel={sectorLabel}
+              amountError={amountError}
+              dateError={dateError}
+              onToggleActive={() =>
+                setFormData((prev) => ({ ...prev, isActive: !prev.isActive }))
+              }
+              showInactiveConfirm={showInactiveConfirm}
+              setShowInactiveConfirm={setShowInactiveConfirm}
             />
           </div>
         </SheetContent>
@@ -237,7 +376,7 @@ const EditModal: React.FC<EditModalProps> = ({
       <DialogContent className="sm:max-w-md animate-scale-in">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-primary">
-            Edit Selected Fares
+            Editing Fares of {sectorLabel && `(${sectorLabel})`}
           </DialogTitle>
         </DialogHeader>
         <EditForm
@@ -247,6 +386,14 @@ const EditModal: React.FC<EditModalProps> = ({
           onClose={onClose}
           isLoading={isLoading}
           selectedCount={selectedFares.length}
+          sectorLabel={sectorLabel}
+          amountError={amountError}
+          dateError={dateError}
+          onToggleActive={() =>
+            setFormData((prev) => ({ ...prev, isActive: !prev.isActive }))
+          }
+          showInactiveConfirm={showInactiveConfirm}
+          setShowInactiveConfirm={setShowInactiveConfirm}
         />
       </DialogContent>
     </Dialog>
