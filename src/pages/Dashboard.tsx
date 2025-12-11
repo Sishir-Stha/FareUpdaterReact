@@ -15,9 +15,10 @@ const Dashboard: React.FC = () => {
   const { toast } = useToast();
 
   const [filters, setFilters] = useState({
-    sector: '',
-    bookingClass: '',
-    fareCode: '',
+    origin: '',
+    destination: '',
+    fareCode: 'e',
+    bookingClass: 'e1',
     flightDate: '',
     currency: 'NPR', // Default currency set to NPR
   });
@@ -43,9 +44,10 @@ const Dashboard: React.FC = () => {
 
   const handleClearFilters = () => {
     setFilters({
-      sector: '',
-      bookingClass: '',
-      fareCode: '',
+      origin: '',
+      destination: '',
+      fareCode: 'e',
+      bookingClass: 'e1',
       flightDate: '',
       currency: 'NPR', // Default currency set to NPR
     });
@@ -59,14 +61,23 @@ const Dashboard: React.FC = () => {
     setSelectedIds(new Set());
 
     const requestBody = {
-      sector: filters.sector.replace('-', '').toUpperCase(), // Normalize sector
+      sector:
+        filters.origin && filters.destination
+          ? `${filters.origin}${filters.destination}`
+          : '',
       bookingClassRcd: filters.bookingClass,
       fareCode: filters.fareCode,
       flightDate: filters.flightDate,
       currency: filters.currency === 'ALL' ? 'npr' : filters.currency.toLowerCase(), // Default to NPR if ALL is selected
     };
 
+    console.log('Request body being sent to API:', requestBody);
+
     try {
+      if (!filters.origin || !filters.destination) {
+        throw new Error('Please select both Origin and Destination before searching.');
+      }
+
       const response = await fetch('http://localhost:8443/api/v1/updater/getFareData', {
         method: 'POST',
         headers: {
