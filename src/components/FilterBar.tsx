@@ -53,6 +53,7 @@ const FilterFields: React.FC<{
           <SelectItem value="BWA">BWA</SelectItem>
           <SelectItem value="BDP">BDP</SelectItem>
           <SelectItem value="KEP">KEP</SelectItem>
+          <SelectItem value="JKR">JKR</SelectItem>
         </SelectContent>
       </Select>
     </div>
@@ -73,28 +74,58 @@ const FilterFields: React.FC<{
           <SelectItem value="BWA">BWA</SelectItem>
           <SelectItem value="BDP">BDP</SelectItem>
           <SelectItem value="KEP">KEP</SelectItem>
+          <SelectItem value="JKR">JKR</SelectItem>
         </SelectContent>
       </Select>
     </div>
 
     <div className="space-y-1.5">
       <label className="text-sm font-medium text-muted-foreground">Fare Code</label>
-      <Input
-        placeholder="e"
-        value={filters.fareCode}
-        onChange={(e) => onFilterChange('fareCode', e.target.value)}
-        className="bg-background"
-      />
+    <Select
+       value={filters.fareCode}
+       onValueChange={(value) => onFilterChange('fareCode', value)}
+      >
+        <SelectTrigger className="bg-background">
+          <SelectValue placeholder="Select FareCode" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="E1">E1</SelectItem>
+          <SelectItem value="EE">EE</SelectItem>
+          <SelectItem value="V">V</SelectItem>
+          <SelectItem value="J">J</SelectItem>
+          <SelectItem value="H">H</SelectItem>
+          <SelectItem value="S">S</SelectItem>
+          <SelectItem value="F">F</SelectItem>
+          <SelectItem value="G">G</SelectItem>
+          <SelectItem value="Y">Y</SelectItem>
+          <SelectItem value="N">N</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
+
 
     <div className="space-y-1.5">
       <label className="text-sm font-medium text-muted-foreground">Booking Class</label>
-      <Input
-        placeholder="e1"
-        value={filters.bookingClass}
-        onChange={(e) => onFilterChange('bookingClass', e.target.value)}
-        className="bg-background"
-      />
+        <Select
+       value={filters.bookingClass}
+       onValueChange={(value) => onFilterChange('bookingClass', value)}
+      >
+        <SelectTrigger className="bg-background">
+          <SelectValue placeholder="Select BookingClass" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="E">E</SelectItem>
+          <SelectItem value="D">D</SelectItem>
+          <SelectItem value="V">V</SelectItem>
+          <SelectItem value="J">J</SelectItem>
+          <SelectItem value="H">H</SelectItem>
+          <SelectItem value="S">S</SelectItem>
+          <SelectItem value="F">F</SelectItem>
+          <SelectItem value="G">G</SelectItem>
+          <SelectItem value="Y">Y</SelectItem>
+          <SelectItem value="N">N</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
 
     <div className="space-y-1.5">
