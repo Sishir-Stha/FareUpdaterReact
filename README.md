@@ -50,13 +50,10 @@ This is the frontend for the Fare Update Project. It's a React application built
 ### 2025/12/10
 
 - Response from QA or Revenue Department and made suggested changes
-- Filter Bar changes
-        - The sector text box is changed to origin and destination drop down
-        - There are default value of booking class and fare code to e1 and e
-- Edit Popup changes
-        -  Added the sector to display on the Edit popup
-        - Added another button to active and inactive the fare
-        - Fixed some bug like negative value in amount and date from and to mismatch bug
-- Authentication
-        - only the Revenue department can use this system now even if the same company they cannot use untill or unless they are revenue department
+- Filter Bar changes - The sector text box is changed to origin and destination drop down - There are default value of booking class and fare code to e1 and e
+- Edit Popup changes - Added the sector to display on the Edit popup - Added another button to active and inactive the fare - Fixed some bug like negative value in amount and date from and to mismatch bug
+- Authentication - only the Revenue department can use this system now even if the same company they cannot use untill or unless they are revenue department
 
+### 2025/12/12
+
+- Changes the fare code and booking class text box to drop down

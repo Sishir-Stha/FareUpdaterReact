@@ -17,8 +17,8 @@ const Dashboard: React.FC = () => {
   const [filters, setFilters] = useState({
     origin: '',
     destination: '',
-    fareCode: 'e',
-    bookingClass: 'e1',
+    fareCode: 'E1',
+    bookingClass: 'E',
     flightDate: '',
     currency: 'NPR', // Default currency set to NPR
   });
@@ -46,8 +46,8 @@ const Dashboard: React.FC = () => {
     setFilters({
       origin: '',
       destination: '',
-      fareCode: 'e',
-      bookingClass: 'e1',
+      fareCode: 'E1',
+      bookingClass: 'E',
       flightDate: '',
       currency: 'NPR', // Default currency set to NPR
     });
