@@ -310,7 +310,7 @@ const sectorLabel =
     };
 
     try {
-      const response = await fetch('https://fareupdate.yetiairlines.com:8443/api/v1/updater/updateFare', {
+      const response = await fetch('http://localhost:8443/api/v1/updater/updateFare', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

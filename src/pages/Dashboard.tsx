@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
         throw new Error('Please select both Origin and Destination before searching.');
       }
 
-      const response = await fetch('https://fareupdate.yetiairlines.com:8443/api/v1/updater/getFareData', {
+      const response = await fetch('http://localhost:8443/api/v1/updater/getFareData', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
