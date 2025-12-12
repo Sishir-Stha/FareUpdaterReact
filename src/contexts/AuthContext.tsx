@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:8443/api/v1/auth/login', {
+      const response = await fetch('https://fareupdate.yetiairlines.com:8443/api/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
