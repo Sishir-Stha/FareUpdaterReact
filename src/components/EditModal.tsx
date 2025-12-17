@@ -345,7 +345,7 @@ const sectorLabel =
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl">
           <SheetHeader className="pb-2"> {/* Reduced padding-bottom */}
             <SheetTitle className="text-xl font-semibold text-primary">
-              Edit Selected Fares
+              Editing Fares of {sectorLabel && `(${sectorLabel})`}
             </SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto pb-safe">
