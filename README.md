@@ -57,3 +57,7 @@ This is the frontend for the Fare Update Project. It's a React application built
 ### 2025/12/12
 
 - Changes the fare code and booking class text box to drop down
+
+### 2025/12/17
+
+- Changes made in Edit panel of mobile and desktop as asked

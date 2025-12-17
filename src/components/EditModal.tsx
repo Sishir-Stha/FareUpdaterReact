@@ -310,7 +310,7 @@ const sectorLabel =
     };
 
     try {
-      const response = await fetch('http://localhost:8443/api/v1/updater/updateFare', {
+      const response = await fetch('https://fareupdate.yetiairlines.com:8443/api/v1/updater/updateFare', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -345,7 +345,7 @@ const sectorLabel =
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl">
           <SheetHeader className="pb-2"> {/* Reduced padding-bottom */}
             <SheetTitle className="text-xl font-semibold text-primary">
-              Edit Selected Fares
+              Editing Fares of {sectorLabel && `(${sectorLabel})`}
             </SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto pb-safe">
